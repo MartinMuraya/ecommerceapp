@@ -1,0 +1,44 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isSeller() {
+      // In a real app, this would check a custom claim or a user document
+      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'seller';
+    }
+
+    // Users
+    match /users/{userId} {
+      allow read: if isAuthenticated(); // Users can read other profiles (basic info)
+      allow write: if isOwner(userId);
+    }
+
+    // Products
+    match /products/{productId} {
+      allow read: if true; // Publicly readable
+      allow write: if isSeller(); // Only sellers can create/update
+    }
+
+    // Orders
+    match /orders/{orderId} {
+      allow create: if isAuthenticated();
+      allow read: if isAuthenticated() && (resource.data.buyerId == request.auth.uid || resource.data.sellerId == request.auth.uid);
+      allow update: if isAuthenticated(); // Needs more granular checks
+    }
+    
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false; 
+    }
+  }
+}
