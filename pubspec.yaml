@@ -53,6 +53,13 @@ dependencies:
 
   # UI
   cupertino_icons: ^1.0.8
+  
+  # Payment
+  flutter_stripe: ^10.1.1
+  intl_phone_field: ^3.2.0
+  
+  # UI Components
+  timeline_tile: ^2.0.0
 
 dev_dependencies:
   flutter_test:
