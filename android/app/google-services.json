@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "245500086009",
+    "project_id": "qejani-a4ed6",
+    "storage_bucket": "qejani-a4ed6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:245500086009:android:77a5adad1bd67e69b28428",
+        "android_client_info": {
+          "package_name": "Qejani.appliances.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA4q5hrvTjlLUzjHWO8UZ1aJJyBOKOzkFE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

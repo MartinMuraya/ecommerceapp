@@ -1,6 +1,6 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../repositories/payment_repository.dart';
+import '../../domain/repositories/payment_repository.dart';
 
 class PaymentRepositoryImpl implements PaymentRepository {
   final FirebaseFunctions _functions;

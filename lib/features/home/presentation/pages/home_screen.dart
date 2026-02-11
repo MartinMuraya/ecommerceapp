@@ -14,6 +14,7 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final productsAsync = ref.watch(productsStreamProvider);
     final user = ref.watch(firebaseAuthProvider).currentUser;
+    final appUserAsync = ref.watch(appUserProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -27,6 +28,33 @@ class HomeScreen extends ConsumerWidget {
           ),
           PopupMenuButton(
             itemBuilder: (context) => [
+              appUserAsync.when(
+                data: (appUser) {
+                  if (appUser?.role == 'seller') {
+                    return PopupMenuItem(
+                      child: const Text('Seller Dashboard'),
+                      onTap: () {
+                        context.push('/seller-dashboard');
+                      },
+                    );
+                  } else {
+                    return PopupMenuItem(
+                      child: const Text('Become a Seller'),
+                      onTap: () {
+                        context.push('/become-seller');
+                      },
+                    );
+                  }
+                },
+                loading: () => const PopupMenuItem(enabled: false, child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+                error: (_, __) => const PopupMenuItem(enabled: false, child: Text('Error loading profile')),
+              ),
+              PopupMenuItem(
+                child: const Text('My Orders'),
+                onTap: () {
+                  context.push('/orders');
+                },
+              ),
               PopupMenuItem(
                 child: const Text('Logout'),
                 onTap: () {

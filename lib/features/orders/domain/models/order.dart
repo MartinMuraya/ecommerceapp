@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../cart/domain/models/cart_item.dart';
+import '../../../cart/domain/models/cart_item.dart';
+import '../../../products/domain/models/product.dart';
 
 class Order {
   final String id;
@@ -32,7 +33,35 @@ class Order {
       'totalAmount': totalAmount,
       'status': status,
       'paymentMethod': paymentMethod,
-      'createdAt': FieldValue.serverTimestamp(),
+      'createdAt': createdAt,
     };
+  }
+
+  factory Order.fromMap(Map<String, dynamic> map, String id) {
+    return Order(
+      id: id,
+      buyerId: map['buyerId'] ?? '',
+      items: (map['items'] as List? ?? []).map((e) => CartItem(
+        product: Product(
+          id: e['productId'],
+          title: e['title'],
+          price: (e['price'] as num).toDouble(),
+          // Other product fields are missing in the order summary, 
+          // might need a lightweight Product model or just enough fields.
+          description: '',
+          currency: 'KES',
+          category: '',
+          images: [],
+          stock: 0,
+          sellerId: '',
+          isAvailable: true,
+        ),
+        quantity: e['quantity'] ?? 0,
+      )).toList(),
+      totalAmount: (map['totalAmount'] as num? ?? 0).toDouble(),
+      status: map['status'] ?? 'pending',
+      paymentMethod: map['paymentMethod'] ?? '',
+      createdAt: (map['createdAt'] as Timestamp).toDate(),
+    );
   }
 }

@@ -91,8 +91,7 @@ class CartScreen extends ConsumerWidget {
                         const SizedBox(height: 16),
                         FilledButton(
                           onPressed: () {
-                             // context.push('/checkout');
-                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Checkout not implemented yet')));
+                             context.push('/checkout');
                           },
                           style: FilledButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),

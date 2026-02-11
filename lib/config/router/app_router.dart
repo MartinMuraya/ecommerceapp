@@ -7,6 +7,10 @@ import '../../features/auth/presentation/pages/signup_screen.dart';
 import '../../features/home/presentation/pages/home_screen.dart';
 import '../../features/products/presentation/pages/product_details_screen.dart';
 import '../../features/cart/presentation/pages/cart_screen.dart';
+import '../../features/checkout/presentation/pages/checkout_screen.dart';
+import '../../features/orders/presentation/pages/orders_screen.dart';
+import '../../features/auth/presentation/pages/become_seller_screen.dart';
+import '../../features/auth/presentation/pages/seller_dashboard_screen.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -54,6 +58,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/cart',
         builder: (context, state) => const CartScreen(),
+      ),
+      GoRoute(
+        path: '/checkout',
+        builder: (context, state) => const CheckoutScreen(),
+      ),
+      GoRoute(
+        path: '/orders',
+        builder: (context, state) => const OrdersScreen(),
+      ),
+      GoRoute(
+        path: '/become-seller',
+        builder: (context, state) => const BecomeSellerScreen(),
+      ),
+      GoRoute(
+        path: '/seller-dashboard',
+        builder: (context, state) => const SellerDashboardScreen(),
       ),
     ],
   );

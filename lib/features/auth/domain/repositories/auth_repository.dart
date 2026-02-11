@@ -1,4 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import '../models/app_user.dart';
+import '../models/seller.dart';
 
 abstract class AuthRepository {
   Stream<User?> get authStateChanges;
@@ -8,4 +10,7 @@ abstract class AuthRepository {
   Future<void> signOut();
   Future<void> sendPasswordResetEmail(String email);
   Future<User?> signInWithGoogle();
+  Future<AppUser?> getAppUser(String uid);
+  Future<void> updateRole(String uid, String role);
+  Future<void> becomeSeller(String uid, Seller seller);
 }

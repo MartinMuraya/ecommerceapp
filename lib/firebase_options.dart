@@ -47,20 +47,21 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'your-api-key',
-    appId: 'your-app-id',
-    messagingSenderId: 'your-sender-id',
-    projectId: 'your-project-id',
-    authDomain: 'your-project-id.firebaseapp.com',
-    storageBucket: 'your-project-id.appspot.com',
+    apiKey: 'AIzaSyD9SatDcdMswXUC5dQfL1HzHpXwTRQjAoE',
+    appId: '1:245500086009:web:1ea3fc2d27e3ebe1b28428',
+    messagingSenderId: '245500086009',
+    projectId: 'qejani-a4ed6',
+    authDomain: 'qejani-a4ed6.firebaseapp.com',
+    storageBucket: 'qejani-a4ed6.firebasestorage.app',
+    measurementId: 'G-NPKRCCNZ13',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'your-api-key',
-    appId: 'your-app-id',
-    messagingSenderId: 'your-sender-id',
-    projectId: 'your-project-id',
-    storageBucket: 'your-project-id.appspot.com',
+    apiKey: 'AIzaSyA4q5hrvTjlLUzjHWO8UZ1aJJyBOKOzkFE',
+    appId: '1:245500086009:android:77a5adad1bd67e69b28428',
+    messagingSenderId: '245500086009',
+    projectId: 'qejani-a4ed6',
+    storageBucket: 'qejani-a4ed6.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
