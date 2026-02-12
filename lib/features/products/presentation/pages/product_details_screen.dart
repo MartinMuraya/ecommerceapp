@@ -81,7 +81,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                                 shape: BoxShape.circle,
                                 color: _currentImageIndex == index
                                     ? Theme.of(context).primaryColor
-                                    : Colors.white.withOpacity(0.8),
+                                    : Colors.white.withValues(alpha: 0.8),
                                 boxShadow: [
                                   BoxShadow(
                                     color: Colors.black.withOpacity(0.2),

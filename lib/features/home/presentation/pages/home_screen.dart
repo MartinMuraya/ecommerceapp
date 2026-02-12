@@ -3,18 +3,30 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../products/data/repositories/product_repository.dart';
 import '../../../products/domain/models/product.dart';
-import '../../../auth/presentation/controllers/auth_controller.dart';
-import '../../../auth/presentation/providers/auth_providers.dart';
 
 
-class HomeScreen extends ConsumerWidget {
+import '../../../../core/constants/app_constants.dart';
+
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final productsAsync = ref.watch(productsStreamProvider);
-    final user = ref.watch(firebaseAuthProvider).currentUser;
-    final appUserAsync = ref.watch(appUserProvider);
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  String? _selectedCategory;
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final productsAsync = ref.watch(productsStreamProvider((category: _selectedCategory, search: _searchController.text)));
 
     return Scaffold(
       appBar: AppBar(
@@ -22,76 +34,93 @@ class HomeScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.shopping_cart_outlined),
-            onPressed: () {
-              context.push('/cart');
-            },
+            onPressed: () => context.push('/cart'),
           ),
-          PopupMenuButton(
-            itemBuilder: (context) => [
-              appUserAsync.when(
-                data: (appUser) {
-                  if (appUser?.role == 'seller') {
-                    return PopupMenuItem(
-                      child: const Text('Seller Dashboard'),
-                      onTap: () {
-                        context.push('/seller-dashboard');
-                      },
-                    );
-                  } else {
-                    return PopupMenuItem(
-                      child: const Text('Become a Seller'),
-                      onTap: () {
-                        context.push('/become-seller');
-                      },
-                    );
-                  }
-                },
-                loading: () => const PopupMenuItem(enabled: false, child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))),
-                error: (_, __) => const PopupMenuItem(enabled: false, child: Text('Error loading profile')),
-              ),
-              PopupMenuItem(
-                child: const Text('My Orders'),
-                onTap: () {
-                  context.push('/orders');
-                },
-              ),
-              PopupMenuItem(
-                child: const Text('Logout'),
-                onTap: () {
-                  ref.read(authControllerProvider.notifier).signOut();
-                },
-              ),
-            ],
-            icon: CircleAvatar(
-              radius: 16,
-               backgroundImage: user?.photoURL != null ? NetworkImage(user!.photoURL!) : null,
-              child: user?.photoURL == null ? const Icon(Icons.person, size: 16) : null,
-            ),
-          )
+          IconButton(
+            icon: const Icon(Icons.person_outline),
+            onPressed: () => context.push('/profile'),
+          ),
+          const SizedBox(width: 8),
         ],
       ),
-      body: productsAsync.when(
-        data: (products) {
-            if (products.isEmpty) {
-                return const Center(child: Text('No products found'));
-            }
-            return GridView.builder(
-            padding: const EdgeInsets.all(16),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 0.75,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search products...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+              ),
+              onChanged: (v) => setState(() {}),
             ),
-            itemCount: products.length,
-            itemBuilder: (context, index) {
-              final product = products[index];
-              return ProductCard(product: product);
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
+          ),
+          SizedBox(
+            height: 50,
+            child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                ChoiceChip(
+                  label: const Text('All'),
+                  selected: _selectedCategory == null,
+                  onSelected: (selected) {
+                    if (selected) setState(() => _selectedCategory = null);
+                  },
+                ),
+                const SizedBox(width: 8),
+                ...AppConstants.categories.map((category) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(category),
+                      selected: _selectedCategory == category,
+                      onSelected: (selected) {
+                        setState(() {
+                          _selectedCategory = selected ? category : null;
+                        });
+                      },
+                      selectedColor: Theme.of(context).colorScheme.primaryContainer,
+                      labelStyle: TextStyle(
+                        color: _selectedCategory == category
+                          ? Theme.of(context).colorScheme.primary
+                          : null,
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: productsAsync.when(
+              data: (products) {
+                if (products.isEmpty) {
+                  return const Center(child: Text('No products found'));
+                }
+                return GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.75,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                  ),
+                  itemCount: products.length,
+                  itemBuilder: (context, index) => ProductCard(product: products[index]),
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, _) => Center(child: Text('Error: $err')),
+            ),
+          ),
+        ],
       ),
     );
   }

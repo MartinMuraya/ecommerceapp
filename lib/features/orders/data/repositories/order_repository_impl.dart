@@ -34,6 +34,17 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   @override
+  Stream<List<Order>> getAllOrders() {
+    return _firestore
+        .collection('orders')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Order.fromMap(doc.data(), doc.id))
+            .toList());
+  }
+
+  @override
   Future<Order?> getOrderById(String orderId) async {
     final doc = await _firestore.collection('orders').doc(orderId).get();
     if (doc.exists) {

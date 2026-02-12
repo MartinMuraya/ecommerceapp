@@ -59,4 +59,5 @@ class AppUser {
       createdAt: createdAt,
     );
   }
+  bool get isAdmin => role == 'admin';
 }

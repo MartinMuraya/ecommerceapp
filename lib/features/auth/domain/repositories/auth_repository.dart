@@ -11,6 +11,9 @@ abstract class AuthRepository {
   Future<void> sendPasswordResetEmail(String email);
   Future<User?> signInWithGoogle();
   Future<AppUser?> getAppUser(String uid);
+  Stream<AppUser?> getAppUserStream(String uid);
   Future<void> updateRole(String uid, String role);
   Future<void> becomeSeller(String uid, Seller seller);
+  Stream<List<AppUser>> getAllUsers();
+  Future<void> initializeProfile(User user);
 }

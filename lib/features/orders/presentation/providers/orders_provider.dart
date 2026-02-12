@@ -10,3 +10,6 @@ final ordersProvider = StreamProvider<List<Order>>((ref) {
   }
   return ref.watch(orderRepositoryProvider).getOrders(user.uid);
 });
+final adminOrdersProvider = StreamProvider<List<Order>>((ref) {
+  return ref.watch(orderRepositoryProvider).getAllOrders();
+});
