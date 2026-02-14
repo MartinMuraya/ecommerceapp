@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -28,7 +28,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   bool _isAvailable = true;
   bool _isLoading = false;
   List<String> _imageUrls = [];
-  final List<File> _newImageFiles = [];
+  final List<XFile> _newImageFiles = [];
 
   @override
   void initState() {
@@ -58,7 +58,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
-        _newImageFiles.add(File(pickedFile.path));
+        _newImageFiles.add(pickedFile);
       });
     }
   }
@@ -187,7 +187,15 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       padding: const EdgeInsets.only(right: 8),
                       child: Stack(
                         children: [
-                          Image.file(file, width: 100, height: 100, fit: BoxFit.cover),
+                          FutureBuilder<Uint8List>(
+                            future: file.readAsBytes(),
+                            builder: (context, snapshot) {
+                              if (snapshot.hasData) {
+                                return Image.memory(snapshot.data!, width: 100, height: 100, fit: BoxFit.cover);
+                              }
+                              return Container(width: 100, height: 100, color: Colors.grey[300]);
+                            },
+                          ),
                           Positioned(
                             right: 0,
                             child: IconButton(
