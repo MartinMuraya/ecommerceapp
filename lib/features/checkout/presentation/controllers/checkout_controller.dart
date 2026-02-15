@@ -1,5 +1,7 @@
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import '../../../payments/data/repositories/payment_repository_impl.dart';
 import '../../../orders/data/repositories/order_repository_impl.dart';
 import '../../../orders/domain/models/order.dart';
@@ -12,22 +14,30 @@ class CheckoutState {
   final bool isLoading;
   final String? error;
   final bool isSuccess;
+  final String? currentOrderId;
+  final String? stripeClientSecret; // For web payment handling
 
   CheckoutState({
     this.isLoading = false,
     this.error,
     this.isSuccess = false,
+    this.currentOrderId,
+    this.stripeClientSecret,
   });
 
   CheckoutState copyWith({
     bool? isLoading,
     String? error,
     bool? isSuccess,
+    String? currentOrderId,
+    String? stripeClientSecret,
   }) {
     return CheckoutState(
       isLoading: isLoading ?? this.isLoading,
       error: error,
       isSuccess: isSuccess ?? this.isSuccess,
+      currentOrderId: currentOrderId ?? this.currentOrderId,
+      stripeClientSecret: stripeClientSecret ?? this.stripeClientSecret,
     );
   }
 }
@@ -77,15 +87,44 @@ class CheckoutController extends StateNotifier<CheckoutState> {
           amount: amount,
           orderId: orderId,
         );
+        state = CheckoutState(isSuccess: true, isLoading: false, currentOrderId: orderId);
       } else if (method == PaymentMethod.stripe) {
         final clientSecret = await paymentRepo.createStripePaymentIntent(
           amount: amount,
           currency: currency,
         );
-        // TODO: Integrate flutter_stripe to present payment sheet with clientSecret
+        
+        if (kIsWeb) {
+          // For web: Payment sheet is not supported
+          // We'll handle this differently - show a message or redirect to Stripe Checkout
+          // For now, we'll just mark the order as pending and provide the client secret
+          // The UI can handle the web payment flow separately
+          state = CheckoutState(
+            isLoading: false,
+            isSuccess: false,
+            currentOrderId: orderId,
+            stripeClientSecret: clientSecret,
+            error: 'WEB_PAYMENT_REQUIRED', // Special flag for web payment handling
+          );
+        } else {
+          // Mobile/Desktop: Use payment sheet
+          await Stripe.instance.initPaymentSheet(
+            paymentSheetParameters: SetupPaymentSheetParameters(
+              paymentIntentClientSecret: clientSecret,
+              merchantDisplayName: 'Qejani',
+            ),
+          );
+
+          await Stripe.instance.presentPaymentSheet();
+
+          // If we reach here, payment is successful
+          // Update order status locally (backend webhook should also do it)
+          await orderRepo.updateOrderStatus(orderId, 'paid');
+          
+          state = CheckoutState(isSuccess: true, isLoading: false, currentOrderId: orderId);
+        }
       }
 
-      state = CheckoutState(isSuccess: true, isLoading: false);
     } catch (e) {
       state = CheckoutState(isLoading: false, error: e.toString());
     }

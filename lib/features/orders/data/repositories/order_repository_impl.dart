@@ -60,6 +60,15 @@ class OrderRepositoryImpl implements OrderRepository {
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }
+  @override
+  Stream<Order?> watchOrder(String orderId) {
+    return _firestore.collection('orders').doc(orderId).snapshots().map((doc) {
+      if (doc.exists && doc.data() != null) {
+        return Order.fromMap(doc.data()!, doc.id);
+      }
+      return null;
+    });
+  }
 }
 
 final orderRepositoryProvider = Provider<OrderRepository>((ref) {

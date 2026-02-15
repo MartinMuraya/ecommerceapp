@@ -37,5 +37,5 @@ class PaymentRepositoryImpl implements PaymentRepository {
 }
 
 final paymentRepositoryProvider = Provider<PaymentRepository>((ref) {
-  return PaymentRepositoryImpl(FirebaseFunctions.instance);
+  return PaymentRepositoryImpl(FirebaseFunctions.instanceFor(region: 'us-central1'));
 });

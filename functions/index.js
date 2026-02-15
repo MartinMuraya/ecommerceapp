@@ -1,15 +1,79 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+require('dotenv').config();
 const axios = require("axios");
-const stripe = require("stripe")(functions.config().stripe.secret_key);
 
 admin.initializeApp();
 
-// M-Pesa Configuration (should be set via functions:config:set mpesa.consumer_key=... etc.)
-const mpesaConfig = functions.config().mpesa;
+console.log("Functions initializing...");
+
+exports.ping = functions.https.onCall((data, context) => {
+  console.log("Ping received", data);
+  return { message: "pong", timestamp: new Date().toISOString() };
+});
+
+// Helper to get configuration from either process.env or functions.config()
+function getConfig(keyChain) {
+  // Check process.env first (e.g. STRIPE_SECRET_KEY)
+  const envKey = keyChain.toUpperCase().replace(/\./g, "_");
+  if (process.env[envKey]) {
+    return process.env[envKey];
+  }
+
+  // Fallback to functions.config()
+  const config = functions.config();
+  const parts = keyChain.split(".");
+  let current = config;
+  for (const part of parts) {
+    if (current && current[part]) {
+      current = current[part];
+    } else {
+      return null;
+    }
+  }
+  return current;
+}
+
+// Lazy-load Stripe to avoid errors when config is not set
+let stripeInstance = null;
+function getStripe() {
+  if (!stripeInstance) {
+    const secretKey = getConfig("stripe.secret_key");
+
+    if (!secretKey) {
+      console.error("DEBUG: Stripe configuration missing");
+      throw new functions.https.HttpsError("failed-precondition", "Stripe configuration not set");
+    }
+    stripeInstance = require("stripe")(secretKey);
+  }
+  return stripeInstance;
+}
+
+// M-Pesa Configuration
+function getMpesaConfig() {
+  const consumerKey = getConfig("mpesa.consumer_key");
+  const consumerSecret = getConfig("mpesa.consumer_secret");
+  const passkey = getConfig("mpesa.passkey");
+  const shortcode = getConfig("mpesa.shortcode");
+  const callbackUrl = getConfig("mpesa.callback_url");
+
+  if (!consumerKey || !consumerSecret || !passkey || !shortcode) {
+    console.error("DEBUG: M-Pesa configuration missing");
+    throw new functions.https.HttpsError("failed-precondition", "M-Pesa configuration not set");
+  }
+
+  return {
+    consumer_key: consumerKey,
+    consumer_secret: consumerSecret,
+    passkey: passkey,
+    shortcode: shortcode,
+    callback_url: callbackUrl
+  };
+}
 
 // Helper to get M-Pesa Access Token
 async function getMpesaAccessToken() {
+  const mpesaConfig = getMpesaConfig();
   const consumerKey = mpesaConfig.consumer_key;
   const consumerSecret = mpesaConfig.consumer_secret;
   const url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials";
@@ -46,6 +110,7 @@ exports.initiateMpesaPayment = functions.https.onCall(async (data, context) => {
 
   // 3. Prepare STK Push Payload
   const timestamp = new Date().toISOString().replace(/[^0-9]/g, "").slice(0, 14);
+  const mpesaConfig = getMpesaConfig();
   const passkey = mpesaConfig.passkey;
   const shortcode = mpesaConfig.shortcode;
   const password = Buffer.from(shortcode + passkey + timestamp).toString("base64");
@@ -111,6 +176,7 @@ exports.createStripePaymentIntent = functions.https.onCall(async (data, context)
   const amountInSmallestUnit = Math.round(amount * 100);
 
   try {
+    const stripe = getStripe();
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountInSmallestUnit,
       currency: currency,
@@ -189,11 +255,18 @@ exports.mpesaCallback = functions.https.onRequest(async (req, res) => {
 // Placeholder function for Stripe Webhook
 exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
   const sig = req.headers["stripe-signature"];
-  const endpointSecret = functions.config().stripe.webhook_secret;
+  const config = functions.config();
+  const endpointSecret = config.stripe ? config.stripe.webhook_secret : null;
+
+  if (!endpointSecret) {
+    console.error("Stripe webhook secret not configured");
+    return res.status(500).send("Stripe webhook secret not configured");
+  }
 
   let event;
 
   try {
+    const stripe = getStripe();
     event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
   } catch (err) {
     console.error(`Webhook Error: ${err.message}`);
